@@ -13,6 +13,14 @@ sub new {
     }, $class;
 }
 
+sub init {
+    my ($self) = @_;
+
+    my $json = $self->json();
+    
+    return $self;
+}
+
 sub audioFile {
     my ($self) = @_;
     return defined $self->{_audioFile} ?
@@ -49,6 +57,23 @@ sub hopefullyExists {
      my ($self, $path) = @_;
      return $path if (-f $path);
      return undef;
+}
+
+sub deriveTags {
+    my ($self) = @_;
+
+    my $json = $self->json();
+
+    my $tags = {};
+
+    # title
+    # composer
+    # year
+    # performer(s)
+    # album?
+    # track number
+    
+    return $tags;
 }
 
 sub _contentsOf {

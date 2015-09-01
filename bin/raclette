@@ -5,20 +5,26 @@ use warnings;
 
 use Getopt::Long;
 use Data::Dumper;
+use File::Basename;
 
 use Raclette::YTDL;
 use Raclette::AudioBundle;
+use Raclette::Extractors;
+
+binmode(STDOUT, ":utf8");
 
 # 1. parse options
 
 my $output = "./work";
 my $input  = undef;
+my $overrides = {};
 my $skipDownload = undef;
 
 my $result = GetOptions(
     "output=s" => \$output,
     "input=s" => \$input, # either a youtube url or a youtube playlist URL or youtube id
     "skip-download=i" => \$skipDownload,
+    "override=s%" => $overrides,
 );
 
 unless ($result && $input) {
@@ -45,16 +51,158 @@ foreach my $dir (@$downloaded) {
 
 #    3.2 Generate tags and splits
 
-    my $audio = Raclette::AudioBundle->new($dir);
+    my $audio = Raclette::AudioBundle->new($dir)->init();
     
     print "   Audio: ".$audio->audioFile()."\n";
     print "   JSON:  ".$audio->jsonFile()."\n";
     print "   Image: ".$audio->imageFile()."\n";
 
     print "Description: \n".$audio->json()->{description}."\n";
+
+    if (0) {
+        print Data::Dumper->Dump([$audio->json()], [qw($json)]);
+    }
+    
+    my $extractor = Raclette::Extractors->extractorForJSON($audio->json());
+
+    if (!$extractor) {
+        print STDERR "Hmmm, no extractor produced for this file.\n";
+        next;
+    }
+
+    my $tags = {
+        title => $extractor->extractTitle(),
+        comments => $extractor->extractComments(),
+        year => $extractor->extractYear(),
+        composer => $extractor->extractComposer(),
+        performers => $extractor->extractPerformers(),
+        splits => $extractor->extractSplits(),
+        %$overrides,
+    };
+
+    $DB::single = 1;
+    if (0) {
+        print Data::Dumper->Dump([$tags], [qw($tags)]);
+    }
+
+    # TODO: Step in here and allow user to correct!
+    #
+    # This will get populated with the paths to the tracks
+    # once they're ready
+    my $tracks = [];
+
+    foreach my $split (@{$tags->{splits}}) {
+    #        3.3.1 run ffmpeg to generate split and apply tags
+
+        my ($command, $target) = _generateSplitAndTagCommand($audio, $split, $tags);
+
+        if (1) {
+            print "$command\n";
+        }
+        if (1) {
+            _ensureDirectoryExists(dirname($target));
+            my $extracted = `$command`;
+            print $extracted;
+        }
+        
+        push @$tracks, $target;
+    }
+
+    print Data::Dumper->Dump([$tracks], [qw($target)]);
+
+    foreach my $track (@$tracks) {
+        print _addImageToTrack($track, $audio);
+    }
+
+#    3.4 move all final files to single location (?)
+
+    my $outputDir = sprintf("%s/converted/%s/%s", $output, $tags->{composer}, quoteString($tags->{title}));
+    _ensureDirectoryExists($outputDir);
+
+    foreach my $track (@$tracks) {
+        my $mv = "mv \"$track\" \"$outputDir\"";
+        print "Moving: $mv\n";
+        print `$mv`;
+    }
+
+    print `ls -la \"$outputDir\"`;
 }
 
-#    3.3 foreach split:
-#        3.3.1 run ffmpeg to generate split and apply tags
-#        3.3.2 run mp4art to add cover art to new split
 
+sub quoteString {
+    my ($string) = @_;
+    $string =~ s/\"/'/g;
+    $string =~ s!/!_!g;
+    
+    return $string;
+}
+
+sub _generateSplitAndTagCommand {
+    my ($audio, $split, $tags) = @_;
+
+    my $title = $tags->{title};
+    my $source = $audio->audioFile();
+
+    my $numberOfTracks = scalar @{$tags->{splits}};
+
+    my $target = undef;
+    if ($numberOfTracks == 1) {
+        $target = dirname($source)."/target/". quoteString($title).".m4a";
+    } else {
+        $target = dirname($source)."/target/". quoteString($title)." - ". quoteString($split->{title}).".m4a";
+    }
+
+    my $start = $split->{start};
+    my $end   = $split->{end};
+    my $duration = $end - $start;
+
+    my $tagString = "";
+
+    if ($split->{track}) {
+        $tagString .= sprintf("-metadata track=%d/%d ", $split->{track}, $numberOfTracks);
+    }
+
+    if ($title) {
+        $tagString .= "-metadata title=\"" . quoteString($title) ."\" ";
+    }
+
+    if ($tags->{year}) {
+        $tagString .= "-metadata year=\"$tags->{year}\" ";
+    }
+
+    if ($tags->{composer}) {
+        $tagString .= "-metadata composer=\"$tags->{composer}\" ";
+    }
+
+    if ($tags->{artist}) {
+        $tagString .= "-metadata artist=\"". $tags->{artist} ."\" ";
+    }
+
+    if ($tags->{performers}) {
+        my $performers = $tags->{performers} || [];
+        if (scalar @$performers) {
+            my $artistTag = join(", ", @$performers);
+            $tagString .= "-metadata artist=\"$artistTag\" ";
+        }
+    }
+
+    if ($tags->{description}) {
+        $tagString .= "-metadata comments=\"".quotemeta($tags->{description})."\" ";
+    }
+
+    return ("ffmpeg -y -i \"$source\" $tagString -ss $start -t $duration \"$target\"", $target);
+}
+
+sub _ensureDirectoryExists {
+    my ($d) = @_;
+
+    my $c = "mkdir -p \"$d\"";
+    return `$c`;
+}
+
+sub _addImageToTrack {
+    my ($track, $audio) = @_;
+
+    my $command = "mp4art --add ".$audio->imageFile()." \"$track\"";
+    return `$command`;
+}
