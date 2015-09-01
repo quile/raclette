@@ -4,17 +4,21 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use Data::Dumper;
 
 use Raclette::YTDL;
+use Raclette::AudioBundle;
 
 # 1. parse options
 
 my $output = "./work";
 my $input  = undef;
+my $skipDownload = undef;
 
 my $result = GetOptions(
     "output=s" => \$output,
     "input=s" => \$input, # either a youtube url or a youtube playlist URL or youtube id
+    "skip-download=i" => \$skipDownload,
 );
 
 unless ($result && $input) {
@@ -25,13 +29,31 @@ unless ($result && $input) {
 # 2. run youtube-dl with appropriate options
 
 my $ytdl = Raclette::YTDL->new($input, $output)->init(); 
-$result  = $ytdl->execute();
 
-print "Output in location: ".$result->{location}."\nyoutube-dl output:\n".$result->{output}."\n\n";
+if (defined $skipDownload) {
+    $ytdl->setUniqueRunId($skipDownload);
+} else {
+    $result  = $ytdl->execute();
+    print "Output in location: ".$result->{location}."\nyoutube-dl output:\n".$result->{output}."\n\n";
+}
+
+my $downloaded = $ytdl->locationsOfRetrievedVideos();
 
 # 3. foreach downloaded video:
-#    3.1 Download thumbnail
+foreach my $dir (@$downloaded) {
+    print "Processing location: $dir\n";
+
 #    3.2 Generate tags and splits
+
+    my $audio = Raclette::AudioBundle->new($dir);
+    
+    print "   Audio: ".$audio->audioFile()."\n";
+    print "   JSON:  ".$audio->jsonFile()."\n";
+    print "   Image: ".$audio->imageFile()."\n";
+
+    print "Description: \n".$audio->json()->{description}."\n";
+}
+
 #    3.3 foreach split:
 #        3.3.1 run ffmpeg to generate split and apply tags
 #        3.3.2 run mp4art to add cover art to new split

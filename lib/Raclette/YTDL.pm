@@ -17,14 +17,13 @@ sub new {
 sub init {
     my ($self) = @_;
 
-    # ?
+    $self->setUniqueRunId($self->generateNextRunId());
+
     return $self;
 }
 
 sub execute {
     my ($self) = @_;
-
-    $self->setUniqueRunId($self->generateNextRunId());
 
     my $options = [
         "--write-info-json",
@@ -57,7 +56,7 @@ sub fullPathToOutput {
         push @$path, ".";
     }
     push @$path, $self->{_uniqueRunId} if $self->{_uniqueRunId};
-    return join(" ", @$path);
+    return join("/", @$path);
 }
 
 sub setUniqueRunId {
@@ -73,18 +72,8 @@ sub generateNextRunId {
 sub outputString {
     my ($self) = @_;
 
-    my $output = "";
-    
-    if ($self->{_output}) {
-        $output .= $self->{_output}."/";
-    }
-
-    my $nextRun = $self->{_uniqueRunId};
-    if (defined $nextRun) {
-        $output .= $nextRun."/";
-    }
-
-    $output .= "%(autonumber)s/";
+    my $output = $self->fullPathToOutput();
+    $output .= "/%(autonumber)s/";
     $output .= "audio.%(ext)s";
     print STDERR "Using $output for output location\n";
     return $output;
@@ -106,6 +95,22 @@ sub nextRunForDirectory {
 
     print STDERR "Next run is $start\n";
     return sprintf("%d", $start);
+}
+
+sub locationsOfRetrievedVideos {
+    my ($self) = @_;
+
+    my $location = $self->fullPathToOutput();
+
+    opendir DIR, $location or die "Couldn't open directory $location";
+    my @dirs = grep { m/\d+/ } readdir DIR;
+    closedir DIR;
+
+    my $fullDirs = [];
+    foreach my $dir (@dirs) {
+        push @$fullDirs, "$location/$dir";
+    }
+    return $fullDirs;
 }
 
 1;
