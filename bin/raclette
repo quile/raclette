@@ -45,6 +45,8 @@ if (defined $skipDownload) {
 
 my $downloaded = $ytdl->locationsOfRetrievedVideos();
 
+my $problems = [];
+
 # 3. foreach downloaded video:
 foreach my $dir (@$downloaded) {
     print "Processing location: $dir\n";
@@ -58,6 +60,12 @@ foreach my $dir (@$downloaded) {
     print "   Image: ".$audio->imageFile()."\n";
 
     print "Description: \n".$audio->json()->{description}."\n";
+
+	if (!$audio->audioFile() || !$audio->jsonFile() || !$audio->imageFile()) {
+		print STDERR "Error - files incomplete in $dir";
+		push @$problems, $audio;
+		next;
+	}
 
     if (0) {
         print Data::Dumper->Dump([$audio->json()], [qw($json)]);
@@ -80,7 +88,6 @@ foreach my $dir (@$downloaded) {
         %$overrides,
     };
 
-    $DB::single = 1;
     if (0) {
         print Data::Dumper->Dump([$tags], [qw($tags)]);
     }
@@ -126,6 +133,12 @@ foreach my $dir (@$downloaded) {
     }
 
     print `ls -la \"$outputDir\"`;
+
+	# report any problems
+	foreach my $problem (@$problems) {
+		print STDERR "================= PROBLEM ==================\n";
+		print STDERR Data::Dumper->Dump([$problem], [qw($problem)]);
+	}
 }
 
 
