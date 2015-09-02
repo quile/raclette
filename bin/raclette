@@ -146,7 +146,7 @@ sub _generateSplitAndTagCommand {
     my $numberOfTracks = scalar @{$tags->{splits}};
 
     my $target = undef;
-    my $tagString = "";
+    my $tagString = "-metadata album=\"$title\" -metadata TIT1=\"$title\" ";
 
     if ($numberOfTracks == 1) {
         $target = dirname($source)."/target/". quoteString($title).".m4a";
