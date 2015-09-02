@@ -55,7 +55,7 @@ sub fullPathToOutput {
     } else {
         push @$path, ".";
     }
-    push @$path, $self->{_uniqueRunId} if $self->{_uniqueRunId};
+    push @$path, $self->{_uniqueRunId} if defined($self->{_uniqueRunId});
     return join("/", @$path);
 }
 

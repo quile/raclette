@@ -54,8 +54,8 @@ sub extractSplits {
         push @$splits, $split;
     }
 
-    $DB::single = 1;
-    return $self->populateSplits($splits, $json->{duration});
+    return $self->populateSplits($splits, $json->{duration}) if scalar @$splits;
+    return $self->SUPER::extractSplits();
 }
 
 sub _roman {

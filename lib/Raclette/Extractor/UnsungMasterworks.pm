@@ -55,7 +55,8 @@ sub extractSplits {
         push @$splits, $split;
     }
 
-    return $self->populateSplits($splits, $json->{duration});
+    return $self->populateSplits($splits, $json->{duration}) if scalar @$splits;
+    return $self->SUPER::extractSplits();
 }
 
 sub _romanToArabic {

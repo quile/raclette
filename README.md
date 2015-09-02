@@ -16,3 +16,28 @@ great tools to get it to do what I need.
 
 Well, it's not designed to be open-ended and flexible; it's just
 designed to do one job.  This means the code is pretty grim.
+
+# Installation
+
+This will only work on OSX, as far as I know.  I suppose it could work
+on Linux with some tweaking, but Windoze is probably a lost cause.
+
+Check it out of github:
+
+    git clone https://github.com/quile/raclette.git
+
+Make sure you have these dependencies installed:
+
+    brew install ffmpeg
+    brew install mp4v2
+
+and obviously Perl, too, which should be installed already.
+
+# Usage
+
+Basic usage:
+
+```bash
+> cd raclette/
+> bin/raclette --input=<youtube id of video or playlist> --output=<dir> [--skip-download=X] [--override key=value]
+```    

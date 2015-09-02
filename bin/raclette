@@ -165,7 +165,6 @@ sub _generateSplitAndTagCommand {
         $tagString .= sprintf("-metadata track=%d/%d ", $split->{track}, $numberOfTracks);
     }
 
-
     if ($tags->{year}) {
         $tagString .= "-metadata year=\"$tags->{year}\" ";
     }
@@ -189,6 +188,8 @@ sub _generateSplitAndTagCommand {
     if ($tags->{description}) {
         $tagString .= "-metadata comments=\"".quotemeta($tags->{description})."\" ";
     }
+
+    $tagString .= "-metadata genre=\"Classical\" ";
 
     return ("ffmpeg -y -i \"$source\" $tagString -ss $start -t $duration \"$target\"", $target);
 }
