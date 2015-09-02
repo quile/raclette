@@ -8,6 +8,7 @@ use utf8;
 # TODO: more to come
 our $_COMPOSERS = {
     "mozart"       => "Mozart, Wolfgang Amadeus",
+    "w. a. mozart" => "Mozart, Wolfgang Amadeus",
     "bach"         => "Bach, Johann Sebastian",
     "haydn"        => "Haydn, Franz Joseph",
     "beethoven"    => "Beethoven, Ludwig van",

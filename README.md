@@ -28,7 +28,7 @@ Check it out of github:
 
 Make sure you have these dependencies installed:
 
-    brew install ffmpeg
+    brew install ffmpeg --with-faac
     brew install mp4v2
 
 and obviously Perl, too, which should be installed already.
