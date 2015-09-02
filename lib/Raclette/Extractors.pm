@@ -4,6 +4,7 @@ use Try::Tiny;
 
 use Raclette::Extractor;
 use Raclette::Extractor::UnsungMasterworks;
+use Raclette::Extractor::ComposersbyNumbers;
 
 sub extractorForJSON {
     my ($class, $json) = @_;

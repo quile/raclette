@@ -146,25 +146,25 @@ sub _generateSplitAndTagCommand {
     my $numberOfTracks = scalar @{$tags->{splits}};
 
     my $target = undef;
+    my $tagString = "";
+
     if ($numberOfTracks == 1) {
         $target = dirname($source)."/target/". quoteString($title).".m4a";
+        $tagString .= "-metadata title=\"" . quoteString($title) ."\" ";
     } else {
         $target = dirname($source)."/target/". quoteString($title)." - ". quoteString($split->{title}).".m4a";
+        $tagString .= "-metadata title=\"" . quoteString($title) ." - " . quoteString($split->{title})."\" ";
     }
 
     my $start = $split->{start};
     my $end   = $split->{end};
     my $duration = $end - $start;
 
-    my $tagString = "";
 
     if ($split->{track}) {
         $tagString .= sprintf("-metadata track=%d/%d ", $split->{track}, $numberOfTracks);
     }
 
-    if ($title) {
-        $tagString .= "-metadata title=\"" . quoteString($title) ."\" ";
-    }
 
     if ($tags->{year}) {
         $tagString .= "-metadata year=\"$tags->{year}\" ";
