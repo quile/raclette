@@ -19,6 +19,33 @@ sub extractComposer {
     return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
 }
 
+our $_PERFORMER_KEYS = [qw(
+    Pianist
+    Violinist
+    Orchestra
+    Conductor
+    Ensemble
+    Horn
+    Flute
+    Clarinet
+    Oboe
+    Bassoon
+    Trumpet
+    Trombone
+    Harp
+    Harpsichord
+    Keyboard
+    Mandoline
+    Mandolin
+    Double.bass
+    Cor.anglais
+    Viola
+    Piano
+    Violin
+    Cello
+    Organ
+)];
+
 sub extractPerformers {
     my ($self) = @_;
     my $description = $self->{_json}->{description};
@@ -39,6 +66,11 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
+    # Seen these:
+    # Mov.I: Andante mesto - Allegro moderato 00:00
+    # Mov.I 00:00
+    # Mov.I: Andante - Allegro - Meno mosso - Tempo I
+    #
     while ($description =~ /((([ivx]+)\. (.*?)) - \(?(\d+):(\d+)\)?)\s+/ig) {
         my $movement = $2;
         my $roman = $3;

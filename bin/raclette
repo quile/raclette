@@ -183,17 +183,17 @@ sub _generateSplitAndTagCommand {
     }
 
     if ($tags->{composer}) {
-        $tagString .= "-metadata composer=\"$tags->{composer}\" ";
+        $tagString .= "-metadata composer=\"".quoteString($tags->{composer})."\" ";
     }
 
     if ($tags->{artist}) {
-        $tagString .= "-metadata artist=\"". $tags->{artist} ."\" ";
+        $tagString .= "-metadata artist=\"".quoteString($tags->{artist})."\" ";
     }
 
     if ($tags->{performers}) {
         my $performers = $tags->{performers} || [];
         if (scalar @$performers) {
-            my $artistTag = join(", ", @$performers);
+            my $artistTag = quoteString(join(", ", @$performers));
             $tagString .= "-metadata artist=\"$artistTag\" ";
         }
     }

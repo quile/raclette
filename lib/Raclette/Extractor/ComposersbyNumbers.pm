@@ -39,7 +39,7 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+):(\d+)\)?)\s+/ig) {
+    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+)[:;](\d+)\)?)\s+/ig) {
         my $track = $2;
         my $tempo = $3;
         my $minutes = $4;
@@ -52,6 +52,27 @@ sub extractSplits {
             source => $1,
         };
         push @$splits, $split;
+    }
+
+    if (scalar @$splits == 0) {
+        # Hmmmm, might be a work with un-numbered movements, like an opera or
+        # oratorio, so let's try that:
+
+        my $track = 1;
+        while ($description =~ /(- (.*?) \(?(\d+)[:;](\d+)\)?)\s+/ig) {
+            my $title = $2;
+            my $minutes = $3;
+            my $seconds = $4;
+
+            my $split = {
+                start => $minutes * 60 + $seconds,
+                title => _roman($track).". ".$title,
+                track => $track,
+                source => $1,
+            };
+            push @$splits, $split;
+            $track++;
+        }
     }
 
     return $self->populateSplits($splits, $json->{duration}) if scalar @$splits;
