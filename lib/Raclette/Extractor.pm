@@ -60,8 +60,8 @@ sub extractYear {
 
     my $comments = $self->{_json}->{description};
 
-    if ($comments =~ m/composed in (.*?)(\d{4})/i
-     || $comments =~ m/written in (.*?)(\d{4})/i) {
+    if ($comments =~ m/composed (.*?)(\d{4})/i
+     || $comments =~ m/written (.*?)(\d{4})/i) {
         return $2;
     }
 

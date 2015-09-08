@@ -15,9 +15,9 @@ sub extractTitle {
 }
 
 sub extractComposer {
-     my ($self) = @_;
+    my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?) - (.*?) - (.*)/;
+    $title =~ m/(.*?)\s+-\s+(.*?)\s+-\s+(.*)/;
     return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
 }
 
@@ -41,7 +41,7 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?([\d:;]+)\)?)\s+/ig) {
+    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+[\d:;]+)\)?)\s+/ig) {
         my $track = $2;
         my $tempo = $3;
         my $time  = $4;
@@ -61,7 +61,7 @@ sub extractSplits {
         # oratorio, so let's try that:
 
         my $track = 1;
-        while ($description =~ /(- (.*?) \(?([\d:;]+)\)?)\s+/ig) {
+        while ($description =~ /(- (.*?) \(?(\d+[\d:;]+)\)?)\s+/ig) {
             my $title = $2;
             my $time = $3;
             my ($hours, $minutes, $seconds) = $self->extractTime($time);

@@ -183,7 +183,7 @@ sub _generateSplitAndTagCommand {
     } else {
         my $track = $split->{track};
         if ($numberOfTracks < 10) {
-            $track = uc(Raclette::Utilities::roman($numberOfTracks));
+            $track = uc(Raclette::Utilities::roman($split->{track}));
         }
         $target = dirname($source)."/target/". quoteString($title)." - $track. ". quoteString($split->{title}).".m4a";
         $tagString .= "-metadata title=\"" . quoteString($title) ." - $track. " . quoteString($split->{title})."\" ";
