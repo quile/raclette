@@ -34,7 +34,7 @@ my $result = GetOptions(
     "dry-run" => \$dryRun,
 );
 
-unless ($result && ($input || ($skipDownload && (scalar @$onlyNumbers || scalar @$matches)))) {
+unless ($result && ($input || $skipDownload)) { #  && (scalar @$onlyNumbers || scalar @$matches)))) {
     usage();
     exit(1);
 }
@@ -181,8 +181,12 @@ sub _generateSplitAndTagCommand {
         $target = dirname($source)."/target/". quoteString($title).".m4a";
         $tagString .= "-metadata title=\"" . quoteString($title) ."\" ";
     } else {
-        $target = dirname($source)."/target/". quoteString($title)." - ". quoteString($split->{title}).".m4a";
-        $tagString .= "-metadata title=\"" . quoteString($title) ." - " . quoteString($split->{title})."\" ";
+        my $track = $split->{track};
+        if ($numberOfTracks < 10) {
+            $track = uc(Raclette::Utilities::roman($numberOfTracks));
+        }
+        $target = dirname($source)."/target/". quoteString($title)." - $track. ". quoteString($split->{title}).".m4a";
+        $tagString .= "-metadata title=\"" . quoteString($title) ." - $track. " . quoteString($split->{title})."\" ";
     }
 
     my $start = $split->{start};
@@ -240,3 +244,13 @@ sub _addImageToTrack {
         return `$command`;
     }
 }
+
+
+sub usage {
+    print <<EOU
+usage: perl -Ilib bin/raclette [--output=<dir>] [--input=<youtube id or url>] [--skip-download=#]
+                               [--only-number=#] [--match=<regexp>] [--dry-run]
+EOU
+;
+}
+
