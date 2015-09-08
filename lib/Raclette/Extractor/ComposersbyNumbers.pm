@@ -45,6 +45,7 @@ sub extractSplits {
         my $track = $2;
         my $tempo = $3;
         my $time  = $4;
+        next unless $time;
         my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
         my $split = {
@@ -64,6 +65,7 @@ sub extractSplits {
         while ($description =~ /(- (.*?) \(?(\d+[\d:;]+)\)?)\s+/ig) {
             my $title = $2;
             my $time = $3;
+            next unless $time;
             my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
             my $split = {
