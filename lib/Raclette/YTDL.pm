@@ -98,7 +98,8 @@ sub nextRunForDirectory {
 }
 
 sub locationsOfRetrievedVideos {
-    my ($self) = @_;
+    my ($self, $only) = @_;
+    $only ||= [];
 
     my $location = $self->fullPathToOutput();
 
@@ -106,8 +107,16 @@ sub locationsOfRetrievedVideos {
     my @dirs = grep { m/\d+/ } readdir DIR;
     closedir DIR;
 
+    my $numbers = {};
+    foreach my $o (@$only) {
+        $numbers->{int($o)} = 1;
+    }
+
     my $fullDirs = [];
     foreach my $dir (@dirs) {
+        if (scalar @$only && !$numbers->{int($dir)}) {
+            next;
+        }
         push @$fullDirs, "$location/$dir";
     }
     return $fullDirs;

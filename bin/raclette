@@ -10,6 +10,7 @@ use File::Basename;
 use Raclette::YTDL;
 use Raclette::AudioBundle;
 use Raclette::Extractors;
+use Raclette::Utilities;
 
 binmode(STDOUT, ":utf8");
 
@@ -19,15 +20,21 @@ my $output = "./work";
 my $input  = undef;
 my $overrides = {};
 my $skipDownload = undef;
+my $matches = [];
+my $onlyNumbers = [];
+my $dryRun = 0;
 
 my $result = GetOptions(
     "output=s" => \$output,
     "input=s" => \$input, # either a youtube url or a youtube playlist URL or youtube id
     "skip-download=i" => \$skipDownload,
     "override=s%" => $overrides,
+    "only-number=i" => $onlyNumbers,
+    "match=s" => $matches,
+    "dry-run" => \$dryRun,
 );
 
-unless ($result && $input) {
+unless ($result && ($input || ($skipDownload && (scalar @$onlyNumbers || scalar @$matches)))) {
     usage();
     exit(1);
 }
@@ -43,7 +50,7 @@ if (defined $skipDownload) {
     print "Output in location: ".$result->{location}."\nyoutube-dl output:\n".$result->{output}."\n\n";
 }
 
-my $downloaded = $ytdl->locationsOfRetrievedVideos();
+my $downloaded = $ytdl->locationsOfRetrievedVideos($onlyNumbers);
 
 my $problems = [];
 
@@ -88,8 +95,20 @@ foreach my $dir (@$downloaded) {
         %$overrides,
     };
 
-    if (0) {
+    if ($dryRun) {
         print Data::Dumper->Dump([$tags], [qw($tags)]);
+    }
+
+    if (scalar @$matches) {
+        my $any = 0;
+        foreach my $match (@$matches) {
+            my $re = qr/$match/;
+            if ($tags->{title} =~ $re) {
+                $any = 1;
+                last;
+            }
+        }
+        next unless $any;
     }
 
     # TODO: Step in here and allow user to correct!
@@ -103,10 +122,9 @@ foreach my $dir (@$downloaded) {
 
         my ($command, $target) = _generateSplitAndTagCommand($audio, $split, $tags);
 
-        if (1) {
+        if ($dryRun) {
             print "$command\n";
-        }
-        if (1) {
+        } else {
             _ensureDirectoryExists(dirname($target));
             my $extracted = `$command`;
             print $extracted;
@@ -121,18 +139,16 @@ foreach my $dir (@$downloaded) {
         print _addImageToTrack($track, $audio);
     }
 
-#    3.4 move all final files to single location (?)
-
     my $outputDir = sprintf("%s/converted/%s/%s", $output, $tags->{composer}, quoteString($tags->{title}));
     _ensureDirectoryExists($outputDir);
 
     foreach my $track (@$tracks) {
         my $mv = "mv \"$track\" \"$outputDir\"";
         print "Moving: $mv\n";
-        print `$mv`;
+        print `$mv` unless $dryRun;
     }
 
-    print `ls -la \"$outputDir\"`;
+    print `ls -la \"$outputDir\"` unless $dryRun;
 
 	# report any problems
 	foreach my $problem (@$problems) {
@@ -173,13 +189,12 @@ sub _generateSplitAndTagCommand {
     my $end   = $split->{end};
     my $duration = $end - $start;
 
-
     if ($split->{track}) {
         $tagString .= sprintf("-metadata track=%d/%d ", $split->{track}, $numberOfTracks);
     }
 
     if ($tags->{year}) {
-        $tagString .= "-metadata year=\"$tags->{year}\" ";
+        $tagString .= "-metadata date=\"$tags->{year}\" ";
     }
 
     if ($tags->{composer}) {
@@ -218,5 +233,10 @@ sub _addImageToTrack {
     my ($track, $audio) = @_;
 
     my $command = "mp4art --add ".$audio->imageFile()." \"$track\"";
-    return `$command`;
+    if ($dryRun) {
+        print "$command\n";
+        return;
+    } else {
+        return `$command`;
+    }
 }

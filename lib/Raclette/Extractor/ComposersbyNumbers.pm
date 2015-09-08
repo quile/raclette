@@ -5,6 +5,8 @@ use warnings;
 
 use base qw(Raclette::Extractor);
 
+use Raclette::Utilities;
+
 sub extractTitle {
     my ($self) = @_;
     my $title = $self->{_json}->{title};
@@ -39,15 +41,15 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+)[:;](\d+)\)?)\s+/ig) {
+    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?([\d:;]+)\)?)\s+/ig) {
         my $track = $2;
         my $tempo = $3;
-        my $minutes = $4;
-        my $seconds = $5;
+        my $time  = $4;
+        my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
         my $split = {
-            start => $minutes * 60 + $seconds,
-            title => _roman($track).". ".$tempo,
+            start => $hours * 3600 + $minutes * 60 + $seconds,
+            title => $tempo,
             track => $track,
             source => $1,
         };
@@ -59,14 +61,14 @@ sub extractSplits {
         # oratorio, so let's try that:
 
         my $track = 1;
-        while ($description =~ /(- (.*?) \(?(\d+)[:;](\d+)\)?)\s+/ig) {
+        while ($description =~ /(- (.*?) \(?([\d:;]+)\)?)\s+/ig) {
             my $title = $2;
-            my $minutes = $3;
-            my $seconds = $4;
+            my $time = $3;
+            my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
             my $split = {
-                start => $minutes * 60 + $seconds,
-                title => _roman($track).". ".$title,
+                start => $hours * 3600 + $minutes * 60 + $seconds,
+                title => $title,
                 track => $track,
                 source => $1,
             };
@@ -79,20 +81,16 @@ sub extractSplits {
     return $self->SUPER::extractSplits();
 }
 
-sub _roman {
-    my ($num) = @_;
-
-    return "I" if $num == 1;
-    return "II" if $num == 2;
-    return "III" if $num == 3;
-    return "IV" if $num == 4;
-    return "V" if $num == 5;
-    return "VI" if $num == 6;
-    return "VII" if $num == 7;
-    return "VIII" if $num == 8;
-    return "IX" if $num == 9;
-    return "X" if $num == 10;
-    return $num;
+sub extractTime {
+    my ($self, $time) = @_;
+    
+    if ($time =~ m/^(\d+)[:;](\d+)$/) {
+        return (0, $1, $2);
+    }
+    if ($time =~ m/^(\d+)[;:](\d+)[:;](\d+)$/) {
+        return ($1, $2, $3);
+    }
+    return (0, 0, 0);
 }
 
 1;

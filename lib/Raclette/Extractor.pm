@@ -9,7 +9,10 @@ use utf8;
 our $_COMPOSERS = {
     "mozart"       => "Mozart, Wolfgang Amadeus",
     "w. a. mozart" => "Mozart, Wolfgang Amadeus",
+    "w.a. mozart"  => "Mozart, Wolfgang Amadeus",
     "bach"         => "Bach, Johann Sebastian",
+    "j.s. bach"    => "Bach, Johann Sebastian",
+    "j. s. bach"   => "Bach, Johann Sebastian",
     "haydn"        => "Haydn, Franz Joseph",
     "beethoven"    => "Beethoven, Ludwig van",
     "chopin"       => "Chopin, Frédéric",
@@ -49,7 +52,7 @@ sub extractComments {
 
 sub extractYear {
     my ($self) = @_;
-    
+
     my $title = $self->{_json}->{title};
     if ($title =~ m/\b(\d{4})\b/) {
         return $1;
@@ -68,10 +71,9 @@ sub extractYear {
 
 sub extractComposer {
     my ($self) = @_;
-    
+
     my $title = $self->{_json}->{title};
 
-    $DB::single = 1;
     if ($title =~ m/(.*?): (.*)/ || $title =~ m/(.*?) - (.*)/) {
         return $self->normaliseComposer($1);
     }
