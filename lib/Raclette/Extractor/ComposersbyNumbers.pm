@@ -28,6 +28,9 @@ sub extractPerformers {
     $description =~ m/Performers?: ([^\$]+)/;
     if ($1) {
         my @performers = split(", ", $1);
+        foreach my $performer (@performers) {
+            $performer =~ s/\.$//;
+        }
         return \@performers;
     }
     return []
