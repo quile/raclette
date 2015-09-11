@@ -44,7 +44,7 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+[\d:;]+)\)?)\s+/ig) {
+    while ($description =~ /((\d+)\. (.*?)\s*-?\s*\(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
         my $track = $2;
         my $tempo = $3;
         my $time  = $4;
@@ -65,7 +65,7 @@ sub extractSplits {
         # oratorio, so let's try that:
 
         my $track = 1;
-        while ($description =~ /(- (.*?) \(?(\d+[\d:;]+)\)?)\s+/ig) {
+        while ($description =~ /(- (.*?) \(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
             my $title = $2;
             my $time = $3;
             next unless $time && $time =~ /[:;]/;

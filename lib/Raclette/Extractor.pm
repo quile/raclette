@@ -63,7 +63,8 @@ sub extractYear {
     if ($comments =~ m/composed (.*?)(\d{4})/i
      || $comments =~ m/written (.*?)(\d{4})/i
      || $comments =~ m/published (.*?)(\d{4})/i
-     || $comments =~ m/first performed (.*?)(\d{4})/i) {
+     || $comments =~ m/first performed (.*?)(\d{4})/i
+     || $comments =~ m/dated (.*?)(\d{4})/i) {
         return $2;
     }
 
