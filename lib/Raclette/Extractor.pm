@@ -128,4 +128,16 @@ sub normaliseComposer {
     return $last . ", ". join(" ", $first, @names);
 }
 
+sub extractTime {
+    my ($self, $time) = @_;
+    
+    if ($time =~ m/^(\d+)[:;](\d+)$/) {
+        return (0, $1, $2);
+    }
+    if ($time =~ m/^(\d+)[;:](\d+)[:;](\d+)$/) {
+        return ($1, $2, $3);
+    }
+    return (0, 0, 0);
+}
+
 1;

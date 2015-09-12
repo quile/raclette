@@ -39,15 +39,17 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /((([ivx]+)\. (.*?)) - \(?(\d+):(\d+)\)?)\s+/ig) {
-        my $movement = $2;
-        my $roman = $3;
-        my $tempo = $4;
-        my $minutes = $5;
-        my $seconds = $6;
+    while ($description =~ /(([ivx]+)\. (.*?) - \(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
+        my $movement = $3;
+        my $roman = $2;
+        my $time = $4;
+
+        next unless $time;
+
+        my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
         my $split = {
-            start => $minutes * 60 + $seconds,
+            start => $hours * 3600 + $minutes * 60 + $seconds,
             title => $movement,
             track => $self->_romanToArabic($roman),
             source => $1,
