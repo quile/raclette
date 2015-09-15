@@ -1,4 +1,4 @@
-package Raclette::Extractor::VariousTopicsArtist.pm
+package Raclette::Extractor::VariousArtistsTopic;
 
 use base qw(Raclette::Extractor::MartinJones);
 

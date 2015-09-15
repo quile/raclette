@@ -7,6 +7,7 @@ use Raclette::Extractor::UnsungMasterworks;
 use Raclette::Extractor::ComposersbyNumbers;
 use Raclette::Extractor::KuhlauDilfeng2;
 use Raclette::Extractor::MartinJones;
+use Raclette::Extractor::VariousArtistsTopic;
 
 sub _sanitisedUploaderName {
     my ($uploader) = @_;
