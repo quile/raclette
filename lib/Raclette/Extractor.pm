@@ -18,6 +18,7 @@ our $_COMPOSERS = {
     "chopin"       => "Chopin, Frédéric",
     "liszt"        => "Liszt, Franz",
     "mendelssohn"  => "Mendelssohn, Felix",
+    "zelenka"      => "Zelenka, Jan Dismas",
 };
 
 sub new {
@@ -31,6 +32,34 @@ sub new {
 sub extractSplits {
     my ($self) = @_;
     my $json = $self->{_json};
+
+    my $desc = $json->{description};
+
+    my $splits = [];
+    my $track = 1;
+
+    #TODO: provide more standard extractors
+    while ($desc =~ m/^(\s*(\d+[:;][\d:;]+)\s*-\s*(.+))$/mg) {
+        my $source = $1;
+        my $time = $2;
+        next unless $time;
+        my $title = $3;
+
+        my ($hours, $minutes, $seconds) = $self->extractTime($time);
+        push @$splits, {
+            start => ($hours * 3600) + ($minutes * 60) + $seconds,
+            title => $title,
+            track => $track,
+            source => $source,
+        };
+        $track++;
+    }
+
+    if (@$splits > 0) {
+        return $self->populateSplits($splits, $json->{duration});
+    }
+
+    # default:
     return [{
         start => 0,
         end => $json->{duration},
@@ -41,7 +70,12 @@ sub extractSplits {
 sub extractTitle {
     my ($self) = @_;
     my $json = $self->{_json};
-    return $json->{title};
+    my $title = $json->{title};
+
+    if ($title =~ m/^(.*?) - (.*)$/) {
+        return $2;
+    }
+    return $title;
 }
 
 sub extractComments {
@@ -60,11 +94,11 @@ sub extractYear {
 
     my $comments = $self->{_json}->{description};
 
-    if ($comments =~ m/composed (.*?)(\d{4})/i
-     || $comments =~ m/written (.*?)(\d{4})/i
-     || $comments =~ m/published (.*?)(\d{4})/i
-     || $comments =~ m/first performed (.*?)(\d{4})/i
-     || $comments =~ m/dated (.*?)(\d{4})/i) {
+    if ($comments =~ m/composed:? (.*?)(\d{4})/i
+     || $comments =~ m/written:? (.*?)(\d{4})/i
+     || $comments =~ m/published:? (.*?)(\d{4})/i
+     || $comments =~ m/first performed:? (.*?)(\d{4})/i
+     || $comments =~ m/dated:? (.*?)(\d{4})/i) {
         return $2;
     }
 
@@ -77,7 +111,7 @@ sub extractComposer {
 
     my $title = $self->{_json}->{title};
 
-    if ($title =~ m/(.*?): (.*)/ || $title =~ m/(.*?) - (.*)/) {
+    if ($title =~ m/(.*?)\s*[:-](.*)/) {
         return $self->normaliseComposer($1);
     }
     return undef;
