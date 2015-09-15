@@ -41,12 +41,15 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    if ($description =~ m/^(.*) \x{b7} (.*)? \x{b7} (.*)?$/m) {
-        my $title = $1;
+    if ($description =~ m/^(([^:]+)?: ([IVX]+)\.? ?(.*) \x{b7} (.*)? \x{b7} (.*)?)$/m) {
+        my $work = $2;
+        my $track = $3 || undef;
+        my $title = $4;
+        
         push @$splits, {
             start => 0,
             title => $title,
-            track => undef,
+            track => Raclette::Utilities::arabic($track),
             source => $1
         };
     }

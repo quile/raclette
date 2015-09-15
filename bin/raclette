@@ -177,7 +177,7 @@ sub _generateSplitAndTagCommand {
     my $target = undef;
     my $tagString = "-metadata album=\"".quoteString($title)."\" -metadata TIT1=\"".quoteString($title)."\" ";
 
-    if ($numberOfTracks == 1) {
+    if ($numberOfTracks == 1 && $tags->{splits}->[0]->{title} eq $tags->{title}) {
         $target = dirname($source)."/target/". quoteString($title).".m4a";
         $tagString .= "-metadata title=\"" . quoteString($title) ."\" ";
     } else {
