@@ -1,4 +1,4 @@
-package Raclette::Extractor::KuhlauDilfeng2;
+package Raclette::Extractor::AdrienSoto;
 
 use strict;
 use warnings;
@@ -8,66 +8,74 @@ use base qw(Raclette::Extractor);
 sub extractTitle {
     my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?) - (.*)( \((c. )?\d{4}\))?/;
+    $title =~ m/(.*?) : (.*) \((.*)\)$/;
     return $2 || $self->SUPER::extractTitle();
 }
 
 sub extractComposer {
-     my ($self) = @_;
+    my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?) - (.*) \(\d{4}\)/;
+    $title =~ m/^(.*?) : (.*) \((.*)\)$/;
     return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
 }
 
-our $_PERFORMER_KEYS = [qw(
-    Pianist
-    Violinist
-    Orchestra
-    Conductor
-    Ensemble
-    Horn
-    Flute
-    Clarinet
-    Oboe
-    Bassoon
-    Trumpet
-    Trombone
-    Harp
-    Harpsichord
-    Keyboard
-    Mandoline
-    Mandolin
-    Double.bass
-    Cor.anglais
-    Viola
-    Piano
-    Violin
-    Cello
-    Organ
-)];
+# our $_PERFORMER_KEYS = [qw(
+    # Pianist
+    # Violinist
+    # Orchestra
+    # Conductor
+    # Ensemble
+    # Horn
+    # Flute
+    # Clarinet
+    # Oboe
+    # Bassoon
+    # Trumpet
+    # Trombone
+    # Harp
+    # Harpsichord
+    # Keyboard
+    # Mandoline
+    # Mandolin
+    # Double.bass
+    # Cor.anglais
+    # Viola
+    # Piano
+    # Violin
+    # Cello
+    # Organ
+# )];
+# 
 
 sub extractPerformers {
     my ($self) = @_;
-    my $description = $self->{_json}->{description};
-
-    $description =~ m/Performers?: ([^\$]+)/;
-    if ($1) {
-        my @performers = split(", ", $1);
-        return \@performers;
-    }
-
-    my $performers = [];
-    foreach my $key (@$_PERFORMER_KEYS) {
-        my $re = "^$key: (.*)\$";
-        my $r = qr/$re/mi;
-
-        while ($description =~ /$r/g) {
-            push @$performers, "$1, $key";
-        }
-    }
-
-    return $performers;
+    my $title = $self->{_json}->{title};
+    $title =~ m/^(.*?) : (.*) \((.*)\)$/;
+    return [$3] || $self->SUPER::extractPerformers();
 }
+
+# sub extractPerformers {
+    # my ($self) = @_;
+    # my $description = $self->{_json}->{description};
+# 
+    # $description =~ m/Performers?: ([^\$]+)/;
+    # if ($1) {
+        # my @performers = split(", ", $1);
+        # return \@performers;
+    # }
+# 
+    # my $performers = [];
+    # foreach my $key (@$_PERFORMER_KEYS) {
+        # my $re = "^$key: (.*)\$";
+        # my $r = qr/$re/mi;
+# 
+        # while ($description =~ /$r/g) {
+            # push @$performers, "$1, $key";
+        # }
+    # }
+# 
+    # return $performers;
+# }
 
 sub extractSplits {
     my ($self) = @_;
@@ -77,15 +85,13 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    # Seen these:
-    # Mov.I: Andante mesto - Allegro moderato 00:00
-    # Mov.I 00:00
-    # Mov.I: Andante - Allegro - Meno mosso - Tempo I
-    while ($description =~ /^((Mov.\s*)?(([ivx]+)[\.,:] (.*?))\(?(\d+[:;][\d:;]+)\)?)/igm) {
-        my $movement = $3;
-        my $roman = $4;
-        my $tempo = $5;
-        my $time = $6;
+    # I. Allegro moderato 00:00
+	$DB::single = 1;
+    while ($description =~ /((([ivx]+)[\.,:] (.*?)) \(?(\d+[:;][\d:;]+)\)?)/igm) {
+        my $movement = $1;
+        my $roman = lc($3);
+        my $tempo = $4;
+        my $time = $5;
         next unless $time;
 
         my ($hours, $minutes, $seconds) = $self->extractTime($time);

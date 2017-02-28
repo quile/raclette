@@ -7,6 +7,7 @@ use utf8;
 
 # TODO: more to come
 our $_COMPOSERS = {
+	"medtner"      => "Medtner, Nikolai",
     "mozart"       => "Mozart, Wolfgang Amadeus",
     "w. a. mozart" => "Mozart, Wolfgang Amadeus",
     "w.a. mozart"  => "Mozart, Wolfgang Amadeus",
@@ -14,11 +15,33 @@ our $_COMPOSERS = {
     "j.s. bach"    => "Bach, Johann Sebastian",
     "j. s. bach"   => "Bach, Johann Sebastian",
     "haydn"        => "Haydn, Franz Joseph",
+    "j. haydn"     => "Haydn, Franz Joseph",
     "beethoven"    => "Beethoven, Ludwig van",
     "chopin"       => "Chopin, Frédéric",
     "liszt"        => "Liszt, Franz",
     "mendelssohn"  => "Mendelssohn, Felix",
     "zelenka"      => "Zelenka, Jan Dismas",
+    "bartok"       => "Béla Bartók",
+    "bartók"       => "Béla Bartók",
+    "kodaly"       => "Zoltán Kodály",
+    "kodály"       => "Zoltán Kodály",
+    "schumann"     => "Robert Schumann",
+    "schubert"     => "Franz Schubert",
+    "brahms"       => "Johannes Brahms",
+    "grieg"        => "Edvard Grieg",
+    "prokofiev"    => "Sergei Prokofiev",
+    "rachmaninov"  => "Sergei Rachmaninov",
+    "rachmaninoff" => "Sergei Rachmaninov",
+    "rameau"       => "Jean-Philippe Rameau",
+    "scarlatti"    => "Domenico Scarlatti",
+    "tchaikovsky"  => "Pyotr Ilich Tchaikovsky",
+    "weber"        => "Carl Maria von Weber",
+    "borodin"      => "Alexander Borodin",
+    "debussy"      => "Claude Debussy",
+    "balakirev"    => "Milii Balakirev",
+    "stravinsky"   => "Igor Stravinsky",
+    "scriabin"     => "Aleksandr Scriabin",
+    "kabalevsky"   => "Dmitri Kabalevsky",
 };
 
 sub new {
@@ -132,6 +155,12 @@ sub populateSplits {
         $splits->[$i]->{end} = $splits->[$i+1]->{start};
     }
     $splits->[$#$splits]->{end} = $duration;
+
+    if (scalar @$splits > 1) {
+        for (my $i = 0; $i <= $#$splits; $i++) {
+            $splits->[$i]->{track} ||= ($i+1);
+        }
+    }
     return $splits;
 }
 

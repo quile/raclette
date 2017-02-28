@@ -1,7 +1,8 @@
-package Raclette::Extractor::UnsungMasterworks;
+package Raclette::Extractor::ChopinInstitute;
 
 use strict;
 use warnings;
+use utf8;
 
 use Raclette::Utilities;
 
@@ -10,27 +11,20 @@ use base qw(Raclette::Extractor);
 sub extractTitle {
     my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
+    $title =~ m/(.*?)\s*\u2013\s*(.*) \(\d{4}\)?/;
     return $2 || $self->SUPER::extractTitle();
 }
 
 sub extractComposer {
-     my ($self) = @_;
-    my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
-    return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
+    my ($self) = @_;
+    return "Chopin, Frédéric";
 }
 
 sub extractPerformers {
     my ($self) = @_;
-    my $description = $self->{_json}->{description};
-
-    $description =~ m/Performers?: ([^\$]+)/;
-    if ($1) {
-        my @performers = split(", ", $1);
-        return \@performers;
-    }
-    return []
+    my $title = $self->{_json}->{title};
+    $title =~ m/(.*?)\s*\u2013\s*(.*) \(\d{4}\)?/;
+    return [ $1 ];
 }
 
 sub extractSplits {
@@ -41,7 +35,7 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /(([ivx]+)\. (.*?) - \(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
+    while ($description =~ /(([ivx]+)\. (.*?)\s*-?\s+[\(\[]?(\d+[:;][\d:;]+)[\)\]]?)\s+/ig) {
         my $movement = $3;
         my $roman = $2;
         my $time = $4;

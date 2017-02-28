@@ -42,4 +42,10 @@ sub arabic {
     return 0;
 }
 
+sub titleCase {
+    my $s = shift;
+    $s =~ s/(\w\S*)/\u\L$1/g;
+    return $s;
+}
+
 1;

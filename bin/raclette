@@ -6,6 +6,8 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 use File::Basename;
+use JSON;
+use Term::ReadLine;
 
 use Raclette::YTDL;
 use Raclette::AudioBundle;
@@ -23,16 +25,20 @@ my $skipDownload = undef;
 my $matches = [];
 my $onlyNumbers = [];
 my $dryRun = 0;
+my $interactive = 0;
 
 my $result = GetOptions(
     "output=s" => \$output,
     "input=s" => \$input, # either a youtube url or a youtube playlist URL or youtube id
     "skip-download=i" => \$skipDownload,
     "override=s%" => $overrides,
-    "only-number=i" => $onlyNumbers,
+    "only-number=s" => $onlyNumbers,
+	"interactive" => \$interactive,
     "match=s" => $matches,
     "dry-run" => \$dryRun,
 );
+
+$onlyNumbers = [split(/,/, join(",", @$onlyNumbers))];
 
 unless ($result && ($input || $skipDownload)) { #  && (scalar @$onlyNumbers || scalar @$matches)))) {
     usage();
@@ -65,6 +71,7 @@ foreach my $dir (@$downloaded) {
     print "   Audio: ".$audio->audioFile()."\n";
     print "   JSON:  ".$audio->jsonFile()."\n";
     print "   Image: ".$audio->imageFile()."\n";
+	print "    Tags: ".$audio->tagsFile()."\n";
 
     print "Description: \n".$audio->json()->{description}."\n";
 
@@ -85,13 +92,18 @@ foreach my $dir (@$downloaded) {
         next;
     }
 
-    my $tags = {
+    my $tags = $audio->tagsFile() ?
+		from_json($audio->_contentsOf($audio->tagsFile)) : {
         title => $extractor->extractTitle(),
         comments => $extractor->extractComments(),
         year => $extractor->extractYear(),
         composer => $extractor->extractComposer(),
         performers => $extractor->extractPerformers(),
         splits => $extractor->extractSplits(),
+	};
+
+	$tags = {
+		%$tags,
         %$overrides,
     };
 
@@ -112,6 +124,38 @@ foreach my $dir (@$downloaded) {
     }
 
     # TODO: Step in here and allow user to correct!
+
+	if ($interactive) {
+		my $json = new JSON;
+		print $json->pretty->encode($tags);
+		print "\n";
+		my $term = Term::ReadLine->new("Corrections");
+		foreach my $key (qw(title composer performers splits)) {
+			print Data::Dumper->Dump([$tags->{$key}], [$key]);
+			my $correct = $term->readline("Is this correct? (Y/n) ");
+			if (!$correct || lc($correct) eq 'y') {
+				next;
+			}
+
+			# correct this key
+			my $new = $term->readline("New value: ");
+			$term->addhistory($new);
+			eval {
+				my $val = from_json($new);
+				if ($val) {
+					$tags->{$key} = $val;
+				}
+			};
+			if ($@) {
+				$tags->{$key} = $new;
+			}
+		}
+		# spit data out as JSON
+		open (TAGS, "> ".$audio->tagsFile()) or die "Couldn't write tags file";
+		print TAGS to_json($tags);
+		close (TAGS);
+	}
+
     #
     # This will get populated with the paths to the tracks
     # once they're ready
@@ -139,8 +183,13 @@ foreach my $dir (@$downloaded) {
         print _addImageToTrack($track, $audio);
     }
 
-    my $outputDir = sprintf("%s/converted/%s/%s", $output, $tags->{composer}, quoteString($tags->{title}));
-    _ensureDirectoryExists($outputDir);
+    my $id = $audio->json()->{id};
+    my $outputDir = sprintf("%s/converted/%s/%s/%s", $output, $tags->{composer}, $id, quoteString($tags->{title}));
+    if ($dryRun) {
+        print "Target directory would be: $outputDir\n";
+    } else {
+        _ensureDirectoryExists($outputDir);
+    }
 
     foreach my $track (@$tracks) {
         my $mv = "mv \"$track\" \"$outputDir\"";
@@ -205,16 +254,16 @@ sub _generateSplitAndTagCommand {
         $tagString .= "-metadata composer=\"".quoteString($tags->{composer})."\" ";
     }
 
-    if ($tags->{artist}) {
-        $tagString .= "-metadata artist=\"".quoteString($tags->{artist})."\" ";
-    }
-
     if ($tags->{performers}) {
         my $performers = $tags->{performers} || [];
         if (scalar @$performers) {
             my $artistTag = quoteString(join(", ", @$performers));
             $tagString .= "-metadata artist=\"$artistTag\" ";
         }
+    }
+
+    if ($tags->{artist}) {
+        $tagString .= "-metadata artist=\"".quoteString($tags->{artist})."\" ";
     }
 
     if ($tags->{description}) {

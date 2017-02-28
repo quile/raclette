@@ -37,6 +37,7 @@ sub execute {
     ];
 
     my $command = "youtube-dl ".join(" ", @$options);
+	print $command."\n";
 
     my $output = `$command`;
 

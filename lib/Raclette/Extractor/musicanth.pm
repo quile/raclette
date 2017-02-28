@@ -1,4 +1,4 @@
-package Raclette::Extractor::UnsungMasterworks;
+package Raclette::Extractor::musicanth;
 
 use strict;
 use warnings;
@@ -10,14 +10,14 @@ use base qw(Raclette::Extractor);
 sub extractTitle {
     my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
+    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)?/;
     return $2 || $self->SUPER::extractTitle();
 }
 
 sub extractComposer {
      my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
+    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)?/;
     return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
 }
 
@@ -41,7 +41,7 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /(([ivx]+)\. (.*?) - \(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
+    while ($description =~ /(([ivx]+)\. (.*?)\s*-?\s+[\(\[]?(\d+[:;][\d:;]+)[\)\]]?)\s+/ig) {
         my $movement = $3;
         my $roman = $2;
         my $time = $4;

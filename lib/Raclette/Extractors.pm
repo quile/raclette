@@ -8,6 +8,13 @@ use Raclette::Extractor::ComposersbyNumbers;
 use Raclette::Extractor::KuhlauDilfeng2;
 use Raclette::Extractor::MartinJones;
 use Raclette::Extractor::VariousArtistsTopic;
+use Raclette::Extractor::musicanth;
+use Raclette::Extractor::incontrariomotu;
+use Raclette::Extractor::ChopinInstitute;
+use Raclette::Extractor::MrPalika123;
+use Raclette::Extractor::Classiquelademande;
+use Raclette::Extractor::Klaviermusik;
+use Raclette::Extractor::AdrienSoto;
 
 sub _sanitisedUploaderName {
     my ($uploader) = @_;

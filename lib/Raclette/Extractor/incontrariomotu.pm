@@ -1,7 +1,8 @@
-package Raclette::Extractor::UnsungMasterworks;
+package Raclette::Extractor::incontrariomotu;
 
 use strict;
 use warnings;
+use utf8;
 
 use Raclette::Utilities;
 
@@ -10,14 +11,18 @@ use base qw(Raclette::Extractor);
 sub extractTitle {
     my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
-    return $2 || $self->SUPER::extractTitle();
+    $title =~ m/(.*?) - (.*) - (\((c. )?\d{4}\))?/;
+    my $work = $2;
+    $work =~ s/op.(\d+)n°(\d+)/Op. $1, $2/g;
+    $work =~ s/op.(\d+)/Op. $1/g;
+    $work =~ s/n°/No. /ig;
+    return Raclette::Utilities::titleCase($work) || $self->SUPER::extractTitle();
 }
 
 sub extractComposer {
-     my ($self) = @_;
+    my ($self) = @_;
     my $title = $self->{_json}->{title};
-    $title =~ m/(.*?)\s*-\s*(.*) \(\d{4}\)/;
+    $title =~ m/(.*?) - (.*) \(\d{4}\)/;
     return $self->normaliseComposer($1 || $self->SUPER::extractComposer());
 }
 
@@ -25,12 +30,18 @@ sub extractPerformers {
     my ($self) = @_;
     my $description = $self->{_json}->{description};
 
-    $description =~ m/Performers?: ([^\$]+)/;
-    if ($1) {
-        my @performers = split(", ", $1);
-        return \@performers;
+    $DB::single = 1;
+    my @bits = split(/^$/m, $description);
+    my $performerBit = pop @bits;
+
+    my @lines = split(/[\r\n]+/, $performerBit);
+    shift @lines;
+
+    if (scalar @lines > 1) {
+        pop @lines;
+        return \@lines;
     }
-    return []
+    return undef;
 }
 
 sub extractSplits {
@@ -41,19 +52,19 @@ sub extractSplits {
     my $json = $self->{_json};
     my $description = $json->{description};
 
-    while ($description =~ /(([ivx]+)\. (.*?) - \(?(\d+[:;][\d:;]+)\)?)\s+/ig) {
-        my $movement = $3;
-        my $roman = $2;
-        my $time = $4;
-
+    while ($description =~ /^((n?°?([\divx]*)[\.,:]? ?(.*?))\(?(\d+[:;][\d:;]+)\)?)/igm) {
+        my $movement = $2;
+        my $roman = $3;
+        my $tempo = $4;
+        my $time = $5;
         next unless $time;
 
         my ($hours, $minutes, $seconds) = $self->extractTime($time);
 
         my $split = {
             start => $hours * 3600 + $minutes * 60 + $seconds,
-            title => $movement,
-            track => Raclette::Utilities::arabic($roman),
+            title => $tempo,
+            track => Raclette::Utilities::arabic($roman) || undef,
             source => $1,
         };
         push @$splits, $split;

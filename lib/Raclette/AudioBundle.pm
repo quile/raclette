@@ -25,7 +25,8 @@ sub audioFile {
     my ($self) = @_;
     return defined $self->{_audioFile} ?
             $self->{_audioFile} :
-            $self->{_audioFile} = $self->hopefullyExists($self->{_path}."/audio.m4a");
+            $self->{_audioFile} = $self->hopefullyExists($self->{_path}."/audio.m4a")
+                               || $self->hopefullyExists($self->{_path}."/audio.webm");
 }
 
 sub jsonFile {
@@ -42,6 +43,13 @@ sub imageFile {
             $self->{_imageFile} = $self->hopefullyExists($self->{_path}."/audio.jpg");
 }
 
+sub tagsFile {
+	my ($self) = @_;
+	return defined $self->{_tagsFile} ?
+			$self->{_tagsFile} :
+			$self->{_tagsFile} = $self->hopefullyExists($self->{_path}."/tags.json");
+}
+
 sub json {
     my ($self) = @_;
     return $self->{_json} if $self->{_json};
@@ -55,7 +63,7 @@ sub json {
 
 sub hopefullyExists {
      my ($self, $path) = @_;
-     return $path if (-f $path);
+     return $path if (-f $path && -s $path != 0);
      return undef;
 }
 
