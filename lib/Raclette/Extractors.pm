@@ -6,6 +6,8 @@ use Raclette::Extractor;
 use Raclette::Extractor::UnsungMasterworks;
 use Raclette::Extractor::ComposersbyNumbers;
 use Raclette::Extractor::KuhlauDilfeng2;
+use Raclette::Extractor::KuhlauDilfeng4;
+use Raclette::Extractor::KuhlauDilfeng5;
 use Raclette::Extractor::MartinJones;
 use Raclette::Extractor::VariousArtistsTopic;
 use Raclette::Extractor::musicanth;
